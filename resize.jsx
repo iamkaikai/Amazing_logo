@@ -2,8 +2,6 @@
  * Based on the script resizeArtboards_CS4andUp.jsx by Carlos Canto 11/4/12
  */
 
-#target Illustrator
-
 var OPTIONS = {
     size   : 32,
     width  : 32,
