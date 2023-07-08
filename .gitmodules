@@ -1,0 +1,3 @@
+[submodule "amazing-logos"]
+	path = amazing-logos
+	url = https://huggingface.co/iamkaikai/amazing-logos
