@@ -18,12 +18,12 @@ for (var i = 0; i < files.length; i++) {
     if(!pngFile.exists){
 
         var doc = app.open(files[i]); // open the document
-        var scaleFactor = Math.min(1024 / doc.width, 1024 / doc.height);
+        var scaleFactor = Math.min(512 / doc.width, 512 / doc.height);
     
         // adjust the artboard size
         try {
-            var width  = 1024;
-            var height = 1024;
+            var width  = 512;
+            var height = 512;
             var abBounds = doc.artboards[0].artboardRect; // left, top, right, bottom
     
             var ableft   = abBounds[0];
@@ -40,30 +40,29 @@ for (var i = 0; i < files.length; i++) {
             var abbottom = abctry - height / 2;
     
             doc.artboards[0].artboardRect = [ableft, abtop, abright, abbottom];
+            
+            // group all items in the document
+            // alert(doc.groupItems.length)
+            if (doc.groupItems.length <= 1){       // if no group
+                var group = doc.pageItems[0];   
+            }else{
+                var group = doc.groupItems[1];      // if there are groups
+            }
         
+            // resize the group
+            group.resize(scaleFactor * 80, scaleFactor * 80, true, true, true, true, scaleFactor * 140);
+            
+            var pngExportOptions = new ExportOptionsPNG24();
+            pngExportOptions.transparency = false;
+            pngExportOptions.artBoardClipping = true;
+        
+            
         }
         catch(e) {
             alert(e.message);
         }
-    
-        // group all items in the document
-        // alert(doc.groupItems.length)
-        if (doc.groupItems.length <= 1){       // if no group
-            var group = doc.pageItems[0];   
-        }else{
-            var group = doc.groupItems[1];      // if there are groups
-        }
-    
-        // resize the group
-        group.resize(scaleFactor * 80, scaleFactor * 80, true, true, true, true, scaleFactor * 140);
-        
-        var pngExportOptions = new ExportOptionsPNG24();
-        pngExportOptions.transparency = false;
-        pngExportOptions.artBoardClipping = true;
-    
         doc.exportFile(pngFile, ExportType.PNG24, pngExportOptions);
         doc.close(SaveOptions.DONOTSAVECHANGES);
-    
     }
     
 }

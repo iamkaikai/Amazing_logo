@@ -1,8 +1,11 @@
+#this scrapper is to get all the logos from Logobook.com
+
 import re
 import os
 import requests
 from bs4 import BeautifulSoup
 import concurrent.futures
+
 
 #get all the links of logos
 def scrap_link():
