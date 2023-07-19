@@ -9,7 +9,7 @@ import random
 import os
 load_dotenv()
 
-driver = webdriver.Chrome()
+driver = webdriver.Chrome()     #need to download the latest version of chromedriver
 
 def crawl(progress):
     continue_step = progress
@@ -159,5 +159,5 @@ def crawl(progress):
     driver.quit()
     print('done')
 
-continue_step = 664
+continue_step = 0
 crawl(continue_step)
