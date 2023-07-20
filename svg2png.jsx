@@ -42,12 +42,25 @@ for (var i = 0; i < files.length; i++) {
             
 
             // put all elements in a group then resize it
+            // alert(app.activeDocument.activeLayer.pageItems.length)
             var group = doc.groupItems.add();
-            itemSize = app.activeDocument.activeLayer.pageItems.length
-            for (var j = 0; j < itemSize; j++) {
-                doc.pageItems[j].move(group, ElementPlacement.INSIDE);
+            
+            while (app.activeDocument.activeLayer.pageItems.length > 1) {
+                app.activeDocument.activeLayer.pageItems[1].move(group, ElementPlacement.INSIDE);
+                
             }
-            group.resize(scaleFactor * 80, scaleFactor * 80, true, false, false, false, scaleFactor * 135);    
+            // group.resize(scaleFactor * 80, scaleFactor * 80, true, false, false, false, scaleFactor * 135); 
+            group.resize(scaleFactor * 80, scaleFactor * 80, true, true, true, true, scaleFactor * 135, Transformation.CENTER); 
+
+
+            // var group = doc.groupItems.add();
+            // var itemSize = app.activeDocument.activeLayer.pageItems.length
+            // // alert('itemSize = ' + itemSize)
+            // for (var j = 1; j < itemSize+1; j++) {
+            //     // alert('j = ' + j)
+            //     doc.pageItems[j].move(group, ElementPlacement.INSIDE);
+            // }
+            // group.resize(scaleFactor * 80, scaleFactor * 80, true, false, false, false, scaleFactor * 135);    
 
 
             // save png
