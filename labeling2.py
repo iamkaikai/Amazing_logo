@@ -1,8 +1,8 @@
 import os
 import csv
 
-dir = './export_logo_512'
-csv_file = './export_logo_512/metadata.csv'
+dir = './export_logo2_512'
+csv_file = './export_logo2_512/metadata.csv'
 
 with open(csv_file, 'w', newline='') as f:
     writer = csv.writer(f)
@@ -13,22 +13,28 @@ with open(csv_file, 'w', newline='') as f:
         if filename == '.DS_Store' or filename == 'metadata.csv':
             continue
         
-        #exclude the country
+        #exclude time and industry
         parts = filename.split('_', 2)
         print(filename)
         print(parts)
         print('-----------')
         
         # British-Tissues_United-Kingdom_Paper_B-Lines-T-United-kingdom.png,"name: British TissuesPaper, B Lines T United kingdom_logo"
-        # output format = name:xxxx, sector(optional), keywords(seperate with spaces), logo 
+
         if len(parts) > 2:
-            part_1 = parts[0].replace('-', ' ')
-            part_2 = parts[2].replace('.png', '_successful vibe, minimalist, thought-provoking, abstract, recognizable, relatable, sharp, vector art, even edges, black and white').replace('_', ', ').replace('-', ' ')
-            prompt = ('Simple elegant logo for ' + part_1 + part_2).replace(',,', ',')
+            if parts[2] == '.png':
+                part_1 = parts[0].replace('-', ' ')
+                part_2 = parts[1].replace('-', ' ')
+                part_3 = parts[2].replace('.png', '_successful vibe, minimalist, thought-provoking, abstract, recognizable, relatable, sharp, vector art, even edges, black and white').replace('_', ', ').replace('-', ' ')
+                prompt = ('Simple elegant logo for ' + part_1 + ', ' + part_2 + part_3).replace(',,', ',')
+            else:                
+                part_1 = parts[0].replace('-', ' ')
+                part_2 = parts[2].replace('.png', '_successful vibe, minimalist, thought-provoking, abstract, recognizable, relatable, sharp, vector art, even edges, black and white').replace('_', ', ').replace('-', ' ')
+                prompt = ('Simple elegant logo for ' + part_1 + ', ' + part_2).replace(',,', ',')
         elif len(parts) > 1:
             part_1 = parts[0].replace('-', ' ')
             part_2 = parts[1].replace('.png', '_successful vibe, minimalist, thought-provoking, abstract, recognizable, relatable, sharp, vector art, even edges, black and white').replace('_', ', ').replace('-', ' ')
-            prompt = ('Simple elegant logo for ' + part_1 + part_2).replace(',,', ',')
+            prompt = ('Simple elegant logo for ' + part_1 + ', ' + part_2).replace(',,', ',')
         else:
             prompt = 'Simple elegant logo for ' + parts[0].replace('-', ' ').replace('.png', ' successful vibe, minimalist, thought-provoking, abstract, recognizable, relatable, sharp, vector art, even edges, black and white')
 
