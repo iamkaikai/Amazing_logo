@@ -3,7 +3,7 @@ var inputFolder = Folder.selectDialog();
 var files = inputFolder.getFiles("*.svg");
 
 // create 'export' folder if it doesn't exist
-var outputFolder = new Folder(inputFolder.fsName + '/export_512b');
+var outputFolder = new Folder(inputFolder.fsName + '/export_512');
 if (!outputFolder.exists) {
     outputFolder.create();
 }
