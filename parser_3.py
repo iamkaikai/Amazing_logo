@@ -1,6 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
 import os
+import random
+import time
+from PIL import Image
 
 
 cookies = {
@@ -30,20 +33,79 @@ headers = {
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
 }
 
+def get_links():
+    logo_hrefs = []
+    with open("logolounge_links.txt", "w") as f:
+        for i in range(1,4131):
+            print(f'crawling page {i} ...')
+            url_to_scrape = 'https://www.logolounge.com/logos?page='+str(i)
+            response = requests.get(url_to_scrape, cookies=cookies, headers=headers)
+            soup = BeautifulSoup(response.text, 'html.parser')
 
-# Use BeautifulSoup to parse the page you're interested in
-logo_hrefs = []
+            logo_items = soup.find_all('article', class_='logo-item')
+            for logo in logo_items:
+                href = logo.find('a', class_='logo-item-figure-content')['href']
+                f.write('https://www.logolounge.com/' + href + '\n')
 
-with open("logolounge_links.txt", "w") as f:
-    for i in range(1,4131):
-        print(f'crawling page {i} ...')
-        url_to_scrape = 'https://www.logolounge.com/logos?page='+str(i)
-        response = requests.get(url_to_scrape, cookies=cookies, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
+    print('done')
+    
+def save_img(url, fileName):
+    response = requests.get(url, stream=True, cookies=cookies, headers=headers)
+    response.raise_for_status()
 
-        logo_items = soup.find_all('article', class_='logo-item')
-        for logo in logo_items:
-            href = logo.find('a', class_='logo-item-figure-content')['href']
-            f.write('https://www.logolounge.com/' + logo_href + '\n')
+    if not os.path.exists('./logos3'):
+        os.makedirs('logos3')
+    img_path = f'./logos3/{fileName}'
+    with open(img_path, 'wb') as fd:
+        for chunk in response.iter_content(chunk_size=8192):
+            fd.write(chunk)
+            
+    # Open, resize, and overwrite the image
+    img = Image.open(img_path)
+    img = img.resize((512,512))
+    img.save(img_path)
+    
 
-print('done')
+def scrap():
+    file = "logolounge_links.txt"
+    count = 0
+    with open(file, 'r') as f:
+        links = f.readlines()
+       
+    for link in links:
+            # time.sleep(random.randint(0,5))
+            link = link.replace("\n", "")
+            try:
+                response = requests.get(link, cookies=cookies, headers=headers)
+                soup = BeautifulSoup(response.text, 'html.parser')
+                
+                #get name and tags
+                try:
+                    dt_client = soup.find('dt', text='Client')
+                    dd_client = dt_client.find_next('dd').text
+                    dt_industry = soup.find('dt', text='Industry')
+                    
+                    dd_industry = dt_industry.find_next('dd').text
+                    fileName = '_'.join([dd_client, dd_industry]).replace('/', ' ')
+                    
+                    dd_tags = dt_industry.find_next('dd').find_next('dd').text.replace('\n','')
+                    fileName = '_'.join([dd_client, dd_industry, dd_tags]).replace('/', ' ')
+                    fileName = fileName + '.png'
+                except:
+                    fileName = dd_client + '.png'
+                    
+                #get logo img and save it
+                figure = soup.find('figure', class_='single-logo-figure')
+                img_url = figure.find('img')['src']
+                
+                #save img
+                print(f'saving img of {link}...')
+                save_img(img_url, fileName)
+            
+            except Exception as e:
+                print(f'something went wrong with {link}')
+                print(f"An error occurred: {e}")
+                with open("logolounge_scrap_failure.txt", "a") as f:
+                    f.write(link + '\n')
+        
+scrap()
