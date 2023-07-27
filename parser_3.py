@@ -4,7 +4,8 @@ import os
 import random
 import time
 from PIL import Image
-
+import io
+from concurrent.futures import ThreadPoolExecutor
 
 cookies = {
     'PHPSESSID': '2k7mfsksi1402rheksl2qlqcq0',
@@ -52,60 +53,70 @@ def get_links():
 def save_img(url, fileName):
     response = requests.get(url, stream=True, cookies=cookies, headers=headers)
     response.raise_for_status()
+    img = Image.open(io.BytesIO(response.content))
+
+    if img.mode == "CMYK":
+        img = img.convert("RGB")
 
     if not os.path.exists('./logos3'):
         os.makedirs('logos3')
-    img_path = f'./logos3/{fileName}'
-    with open(img_path, 'wb') as fd:
-        for chunk in response.iter_content(chunk_size=8192):
-            fd.write(chunk)
-            
-    # Open, resize, and overwrite the image
-    img = Image.open(img_path)
-    img = img.resize((512,512))
-    img.save(img_path)
+
+    img.thumbnail((512, 512))
+    img.save(f'./logos3/{fileName}', "PNG")
     
+
+
+
+def process_link(link):
+    link = link.replace("\n", "")
+    dd_client = ''  # Initialize dd_client as an empty string
+
+    try:
+        response = requests.get(link, cookies=cookies, headers=headers)
+        soup = BeautifulSoup(response.text, 'html.parser')
+                
+        #get name and tags
+        try:
+            dt_client = soup.find('dt', text='Client')
+            dd_client = dt_client.find_next('dd').text
+            dt_industry = soup.find('dt', text='Industry')
+                    
+            dd_industry = dt_industry.find_next('dd').text
+            fileName = '_'.join([dd_client, dd_industry]).replace('/', ' ')
+                    
+            dd_tags = dt_industry.find_next('dd').find_next('dd').text.replace('\n','')
+            fileName = '_'.join([dd_client, dd_industry, dd_tags]).replace('/', ' ')
+            fileName = fileName + '.png'
+        except:
+            fileName = dd_client + '.png'
+                    
+        #get logo img and save it
+        figure = soup.find('figure', class_='single-logo-figure')
+        img_url = figure.find('img')['src']
+                
+        #save img
+        print(f'saving img of {link}...')
+        save_img(img_url, fileName)
+            
+    except Exception as e:
+        print(f'something went wrong with {link}')
+        print(f"An error occurred: {e}")
+        with open("logolounge_scrap_failure.txt", "a") as f:
+            f.write(link + '\n')
+
 
 def scrap():
     file = "logolounge_links.txt"
+    start_count = 65099
     count = 0
+    
     with open(file, 'r') as f:
         links = f.readlines()
        
-    for link in links:
-            # time.sleep(random.randint(0,5))
-            link = link.replace("\n", "")
-            try:
-                response = requests.get(link, cookies=cookies, headers=headers)
-                soup = BeautifulSoup(response.text, 'html.parser')
-                
-                #get name and tags
-                try:
-                    dt_client = soup.find('dt', text='Client')
-                    dd_client = dt_client.find_next('dd').text
-                    dt_industry = soup.find('dt', text='Industry')
-                    
-                    dd_industry = dt_industry.find_next('dd').text
-                    fileName = '_'.join([dd_client, dd_industry]).replace('/', ' ')
-                    
-                    dd_tags = dt_industry.find_next('dd').find_next('dd').text.replace('\n','')
-                    fileName = '_'.join([dd_client, dd_industry, dd_tags]).replace('/', ' ')
-                    fileName = fileName + '.png'
-                except:
-                    fileName = dd_client + '.png'
-                    
-                #get logo img and save it
-                figure = soup.find('figure', class_='single-logo-figure')
-                img_url = figure.find('img')['src']
-                
-                #save img
-                print(f'saving img of {link}...')
-                save_img(img_url, fileName)
-            
-            except Exception as e:
-                print(f'something went wrong with {link}')
-                print(f"An error occurred: {e}")
-                with open("logolounge_scrap_failure.txt", "a") as f:
-                    f.write(link + '\n')
-        
+    with ThreadPoolExecutor(max_workers=5) as executor:  # Adjust max_workers as needed
+        for link in links:
+            if count >= start_count:
+                executor.submit(process_link, link)
+            count += 1
+
 scrap()
