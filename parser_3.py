@@ -80,9 +80,14 @@ def process_link(link):
         #get name and tags
         try:
             dt_client = soup.find('dt', string='Client')
-            dd_client = dt_client.find_next('dd').text
-            dt_industry = soup.find('dt', string='Industry')
-                    
+            if not dd_client:
+                dd_client = soup.find('h1', class_='vcard-heading').text.replace('\n','')
+            else:
+                dd_client = dt_client.find_next('dd').text
+                
+            fileName = dd_client
+            
+            dt_industry = soup.find('dt', string='Industry')        
             dd_industry = dt_industry.find_next('dd').text
             fileName = '_'.join([dd_client, dd_industry]).replace('/', ' ')
                     
@@ -101,7 +106,8 @@ def process_link(link):
         #save img
         print('--------------------- ✅')
         print(f'saving img of {link}...')
-        print(fileName)
+        print(f'client = {dd_client}')
+        print(f'file name = {fileName}')
         print('Response time: {} seconds'.format(response_time))
         print('---------------------\n')
         save_img(img_url, fileName)
@@ -117,7 +123,7 @@ def process_link(link):
 
 def scrap():
     file = "logolounge_links.txt"
-    start_count = 154063
+    start_count = 158061
     count = 0
     
     with open(file, 'r') as f:
