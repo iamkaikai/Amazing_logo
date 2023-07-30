@@ -8,29 +8,27 @@ import io
 from concurrent.futures import ThreadPoolExecutor
 
 cookies = {
-    'PHPSESSID': '2k7mfsksi1402rheksl2qlqcq0',
     'JAVASCRIPT': '1',
-    '_ga': 'GA1.2.1749448558.1690347979',
-    '_gid': 'GA1.2.1295565242.1690347979',
-    '_fbp': 'fb.1.1690347978800.541607340',
+    '_ga': 'GA1.2.355474566.1688918118',
+    '_fbp': 'fb.1.1688918119209.1138937444',
+    'PHPSESSID': 'k79dsj31ihpn32r70062ugud86',
+    '_gid': 'GA1.2.1917758118.1690514693',
     '_gat': '1',
-    '_ga_W07YKRLB5N': 'GS1.2.1690377558.2.1.1690379387.60.0.0',
+    '_ga_W07YKRLB5N': 'GS1.2.1690514693.7.1.1690514701.52.0.0',
 }
 
 headers = {
     'authority': 'www.logolounge.com',
-    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
     'accept-language': 'en-US,en;q=0.9',
-    'cookie': 'PHPSESSID=2k7mfsksi1402rheksl2qlqcq0; JAVASCRIPT=1; _ga=GA1.2.1749448558.1690347979; _gid=GA1.2.1295565242.1690347979; _fbp=fb.1.1690347978800.541607340; _gat=1; _ga_W07YKRLB5N=GS1.2.1690377558.2.1.1690379387.60.0.0',
-    'referer': 'https://www.logolounge.com/logos/winners',
+    # 'cookie': 'JAVASCRIPT=1; _ga=GA1.2.355474566.1688918118; _fbp=fb.1.1688918119209.1138937444; PHPSESSID=k79dsj31ihpn32r70062ugud86; _gid=GA1.2.1917758118.1690514693; _gat=1; _ga_W07YKRLB5N=GS1.2.1690514693.7.1.1690514701.52.0.0',
+    'referer': 'https://www.logolounge.com/logos',
     'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "Google Chrome";v="114"',
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"macOS"',
-    'sec-fetch-dest': 'document',
-    'sec-fetch-mode': 'navigate',
+    'sec-fetch-dest': 'image',
+    'sec-fetch-mode': 'no-cors',
     'sec-fetch-site': 'same-origin',
-    'sec-fetch-user': '?1',
-    'upgrade-insecure-requests': '1',
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
 }
 
@@ -72,19 +70,25 @@ def process_link(link):
     dd_client = ''  # Initialize dd_client as an empty string
 
     try:
+        start_time = time.time()
         response = requests.get(link, cookies=cookies, headers=headers)
+        end_time = time.time()
+        response_time = end_time - start_time
+        response_time= round(response_time, 2)
         soup = BeautifulSoup(response.text, 'html.parser')
                 
         #get name and tags
         try:
-            dt_client = soup.find('dt', text='Client')
+            dt_client = soup.find('dt', string='Client')
             dd_client = dt_client.find_next('dd').text
-            dt_industry = soup.find('dt', text='Industry')
+            dt_industry = soup.find('dt', string='Industry')
                     
             dd_industry = dt_industry.find_next('dd').text
             fileName = '_'.join([dd_client, dd_industry]).replace('/', ' ')
                     
             dd_tags = dt_industry.find_next('dd').find_next('dd').text.replace('\n','')
+            dd_tags = ' '.join(set(dd_tags.split()))
+            
             fileName = '_'.join([dd_client, dd_industry, dd_tags]).replace('/', ' ')
             fileName = fileName + '.png'
         except:
@@ -95,19 +99,25 @@ def process_link(link):
         img_url = figure.find('img')['src']
                 
         #save img
+        print('--------------------- ✅')
         print(f'saving img of {link}...')
+        print(fileName)
+        print('Response time: {} seconds'.format(response_time))
+        print('---------------------\n')
         save_img(img_url, fileName)
             
     except Exception as e:
+        print('--------------------- ❌')
         print(f'something went wrong with {link}')
         print(f"An error occurred: {e}")
+        print('---------------------\n')
         with open("logolounge_scrap_failure.txt", "a") as f:
             f.write(link + '\n')
 
 
 def scrap():
     file = "logolounge_links.txt"
-    start_count = 65099
+    start_count = 154063
     count = 0
     
     with open(file, 'r') as f:
@@ -117,6 +127,7 @@ def scrap():
         for link in links:
             if count >= start_count:
                 executor.submit(process_link, link)
+                time.sleep(random.randint(1, 5))
             count += 1
 
 scrap()
