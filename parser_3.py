@@ -81,21 +81,29 @@ def process_link(link):
         try:
             dt_client = soup.find('dt', string='Client')
             if not dd_client:
+                print('check point a')
                 dd_client = soup.find('h1', class_='vcard-heading').text.replace('\n','')
             else:
+                print('check point a2')
                 dd_client = dt_client.find_next('dd').text
                 
             fileName = dd_client
             
+            print('check point b')
             dt_industry = soup.find('dt', string='Industry')        
             dd_industry = dt_industry.find_next('dd').text
             fileName = '_'.join([dd_client, dd_industry]).replace('/', ' ')
                     
+            print('check point c')
             dd_tags = dt_industry.find_next('dd').find_next('dd').text.replace('\n','')
             dd_tags = ' '.join(set(dd_tags.split()))
             
-            fileName = '_'.join([dd_client, dd_industry, dd_tags]).replace('/', ' ')
+            print('check point d')
+            fileName = '_'.join([dd_client, dd_industry, dd_tags]).replace('/', ' ').replace(' .png', '.png')
             fileName = fileName + '.png'
+            words_to_replace = ['design', 'logo', 'image']
+            for word in words_to_replace:
+                fileName = fileName.replace(word, '')
         except:
             fileName = dd_client + '.png'
                     
@@ -123,13 +131,13 @@ def process_link(link):
 
 def scrap():
     file = "logolounge_links.txt"
-    start_count = 158061
+    start_count = 179892
     count = 0
     
     with open(file, 'r') as f:
         links = f.readlines()
        
-    with ThreadPoolExecutor(max_workers=5) as executor:  # Adjust max_workers as needed
+    with ThreadPoolExecutor(max_workers=8) as executor:  # Adjust max_workers as needed
         for link in links:
             if count >= start_count:
                 executor.submit(process_link, link)
