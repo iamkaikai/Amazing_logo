@@ -80,7 +80,7 @@ def process_link(link):
         #get name and tags
         try:
             dt_client = soup.find('dt', string='Client')
-            if not dd_client:
+            if not dt_client:
                 print('check point a')
                 dd_client = soup.find('h1', class_='vcard-heading').text.replace('\n','')
             else:
@@ -101,7 +101,7 @@ def process_link(link):
             print('check point d')
             fileName = '_'.join([dd_client, dd_industry, dd_tags]).replace('/', ' ').replace(' .png', '.png')
             fileName = fileName + '.png'
-            words_to_replace = ['design', 'logo', 'image']
+            words_to_replace = ['design', 'logo', 'image', 'icon', 'Icon']
             for word in words_to_replace:
                 fileName = fileName.replace(word, '')
         except:
@@ -131,7 +131,7 @@ def process_link(link):
 
 def scrap():
     file = "logolounge_links.txt"
-    start_count = 179892
+    start_count = 203669
     count = 0
     
     with open(file, 'r') as f:
