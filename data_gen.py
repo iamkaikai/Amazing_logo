@@ -189,4 +189,21 @@ def remove_png_files(dir):
 
 dataset = load_dataset("imagefolder", data_dir="./dataset", split="train")
 print(dataset)
+import matplotlib.pyplot as plt
+
+# Assuming that your dataset is a list of dictionaries with 'image' key
+images = dataset[90000:90005]['image']  # Get the first image from the dataset
+
+# If the image is a PIL Image, you can directly display it
+for image in images:
+    if isinstance(image, Image.Image):
+        plt.imshow(image)
+        plt.show()
+    # If the image is a numpy array, you might need to transpose it for correct visualization
+    elif isinstance(image, np.ndarray):
+        if image.shape[0] == 3:  # If the image has 3 channels
+            image = np.transpose(image, (1, 2, 0))  # Transpose it to (Height, Width, Channels)
+        plt.imshow(image)
+        plt.show()
+
 dataset.push_to_hub("iamkaikai/amazing_logos_v3")
