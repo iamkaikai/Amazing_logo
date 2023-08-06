@@ -8,27 +8,28 @@ import io
 from concurrent.futures import ThreadPoolExecutor
 
 cookies = {
-    'JAVASCRIPT': '1',
     '_ga': 'GA1.2.355474566.1688918118',
     '_fbp': 'fb.1.1688918119209.1138937444',
-    'PHPSESSID': 'k79dsj31ihpn32r70062ugud86',
-    '_gid': 'GA1.2.1917758118.1690514693',
-    '_gat': '1',
-    '_ga_W07YKRLB5N': 'GS1.2.1690514693.7.1.1690514701.52.0.0',
+    'JAVASCRIPT': '1',
+    '_gid': 'GA1.2.809913594.1690738001',
+    'PHPSESSID': 'ni5cvchllc6rohcq3m69n9llg3',
+    '_ga_W07YKRLB5N': 'GS1.2.1691327548.21.1.1691327725.60.0.0',
 }
 
 headers = {
     'authority': 'www.logolounge.com',
-    'accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
     'accept-language': 'en-US,en;q=0.9',
-    # 'cookie': 'JAVASCRIPT=1; _ga=GA1.2.355474566.1688918118; _fbp=fb.1.1688918119209.1138937444; PHPSESSID=k79dsj31ihpn32r70062ugud86; _gid=GA1.2.1917758118.1690514693; _gat=1; _ga_W07YKRLB5N=GS1.2.1690514693.7.1.1690514701.52.0.0',
-    'referer': 'https://www.logolounge.com/logos',
+    'cache-control': 'max-age=0',
+    # 'cookie': '_ga=GA1.2.355474566.1688918118; _fbp=fb.1.1688918119209.1138937444; JAVASCRIPT=1; _gid=GA1.2.809913594.1690738001; PHPSESSID=ni5cvchllc6rohcq3m69n9llg3; _ga_W07YKRLB5N=GS1.2.1691327548.21.1.1691327725.60.0.0',
     'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "Google Chrome";v="114"',
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"macOS"',
-    'sec-fetch-dest': 'image',
-    'sec-fetch-mode': 'no-cors',
-    'sec-fetch-site': 'same-origin',
+    'sec-fetch-dest': 'document',
+    'sec-fetch-mode': 'navigate',
+    'sec-fetch-site': 'none',
+    'sec-fetch-user': '?1',
+    'upgrade-insecure-requests': '1',
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
 }
 
@@ -56,6 +57,8 @@ def save_img(url, fileName):
     if img.mode == "CMYK":
         img = img.convert("RGB")
 
+    img.info.pop('icc_profile', None)
+    
     if not os.path.exists('./logos3'):
         os.makedirs('logos3')
 
@@ -75,18 +78,14 @@ def process_link(link):
         end_time = time.time()
         response_time = end_time - start_time
         response_time= round(response_time, 2)
+        print('check point 0')
         soup = BeautifulSoup(response.text, 'html.parser')
-                
+        # print(soup)
+        
         #get name and tags
         try:
-            dt_client = soup.find('dt', string='Client')
-            if not dt_client:
-                print('check point a')
-                dd_client = soup.find('h1', class_='vcard-heading').text.replace('\n','')
-            else:
-                print('check point a2')
-                dd_client = dt_client.find_next('dd').text
-                
+            print('check point a')
+            dd_client = soup.find('h1', class_='vcard-heading').text.replace('\n','')    
             fileName = dd_client
             
             print('check point b')
@@ -131,7 +130,7 @@ def process_link(link):
 
 def scrap():
     file = "logolounge_links.txt"
-    start_count = 203669
+    start_count = 274286
     count = 0
     
     with open(file, 'r') as f:
