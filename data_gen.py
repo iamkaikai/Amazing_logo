@@ -7,7 +7,8 @@ import traceback
 import cv2
 import numpy as np
 import glob
-
+import matplotlib.pyplot as plt
+from labeling3 import create_metadata_csv
 
 directory = './dataset'
 if not os.path.exists(directory):
@@ -32,18 +33,24 @@ def merge_csv():
     
     
 def copy_images(dir):
+    count = 0
+    total = len(os.listdir(dir))
     for file_name in os.listdir(dir):
         if file_name.endswith('.png'):
             source = os.path.join(dir, file_name)
             dest = os.path.join(directory, file_name)
             shutil.copyfile(source, dest)
+            count +=1
+            print(f'{count}/{total}')
+            
 
 
 # Iterate over actual filenames
 def clean_folder(dir):
     print('start cleaning dir...')
     count = 0
-    metadata = pd.read_csv(dir+'metadata.csv')
+    count_del = 0
+    metadata = pd.read_csv(dir+'metadata.csv', lineterminator='\n')
     metadata_filenames = metadata['file_name'].tolist()
     actual_filenames = os.listdir(dir)
     
@@ -58,20 +65,59 @@ def clean_folder(dir):
             file_path = os.path.join(dir, filename)
             os.remove(file_path)
             print(f'Removed file: {file_path}')
+            count_del +=1
 
     print('dir cleaned...')
+    print(f'remove {count_del} files')
     
+
+
+def clean_image_metadata(dir):
+    count = 0
+    total = len(os.listdir(dir))    
+    for file_name in os.listdir(dir):
+        if file_name in ['.DS_Store', 'metadata.csv'] :
+            continue
+        
+        file_path = os.path.join(dir, file_name)
+        try:
+            # Read the image using OpenCV
+            img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
+            
+            # Check the number of channels in the image
+            num_channels = img.shape[2] if len(img.shape) > 2 else 1
+
+            # Convert RGBA images to RGB
+            if num_channels == 4:
+                # Create a white RGB image
+                white_background = np.ones((img.shape[0], img.shape[1], 3), dtype=np.uint8) * 255
+                # Paste the RGBA image onto the white background
+                mask = img[:,:,3] != 0  # Where the image is not transparent
+                white_background[mask] = img[mask,:3]
+                img = white_background
+            
+            # Save the image
+            cv2.imwrite(os.path.join(dir, file_name), img)
+            
+        except:
+            print(f'>>>>> sth wrong with {file_name}')
+            print(file_path)
+            traceback.print_exc()  # This will print the exception details
+
+        count +=1
+        print(f'{count}/{total}')
 
 def rename_files_and_update_metadata(dir):
     print('start renaming files and updating metadata...')
-    metadata = pd.read_csv(dir+'metadata.csv')
+    metadata = pd.read_csv(dir+'metadata.csv', lineterminator='\n')
     metadata.drop(metadata[metadata['file_name'] == 'log.txt'].index, inplace=True)
+    metadata = metadata.reset_index(drop=True)
 
     # Create a dictionary to store the new names
     new_names = {}
 
     # Iterate over the DataFrame
-    for i, row in metadata.iterrows():
+    for i, row in metadata.iterrows():            
         old_name = row['file_name']
         new_name = f"{i:06d}.png"  # This will create names like 000001.jpg, 000002.jpg, etc.
         new_names[old_name] = new_name
@@ -94,107 +140,26 @@ def rename_files_and_update_metadata(dir):
     metadata.to_csv(dir+'metadata.csv', index=False)
 
     print('files renamed and metadata updated...')
-
-
-def clean_image_metadata(dir):    
-    for file_name in os.listdir(dir):
-        if file_name in ['.DS_Store', 'metadata.csv'] :
-            continue
         
-        file_path = os.path.join(dir, file_name)
-        print(file_path)
-        try:
-            img = Image.open(file_path)
-            # Remove ICC profile if it exists
-            if 'icc_profile' in img.info:
-                del img.info['icc_profile']
-            # Convert RGBA or LA images to RGB
-            if img.mode in ['RGBA', 'LA']:
-                # Create a white RGB image
-                white_background = Image.new('RGB', img.size, (255, 255, 255))
-                # Paste the RGBA or LA image onto the white background
-                white_background.paste(img, mask=img.split()[-1])  # The alpha channel is the last channel in the image
-                img = white_background
-            elif img.mode in ['P','PNG']:
-                img = img.convert('RGB')
-            
-            img.save(os.path.join(dir, file_name.replace('.png','.jpg')))
-        except:
-            print(f'>>>>> sth wrong with {file_name}')
-            traceback.print_exc()  # This will print the exception details
-            
-def change_csv_png_to_jpg():
-    df = pd.read_csv('./dataset/metadata.csv')
-    df['file_name'] = df['file_name'].str.replace('.png', '.jpg')
-    df.to_csv('./dataset/metadata.csv', index=False)
 
+############## clean data ##############
 
-def clean_image_metadata(dir):    
-    for file_name in os.listdir(dir):
-        if file_name in ['.DS_Store', 'metadata.csv'] :
-            continue
-        
-        file_path = os.path.join(dir, file_name)
-        print(file_path)
-        try:
-            # Read the image using OpenCV
-            img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
-            
-            # Convert RGBA images to RGB
-            if img.shape[2] == 4:
-                # Create a white RGB image
-                white_background = np.ones((img.shape[0], img.shape[1], 3), dtype=np.uint8) * 255
-                # Paste the RGBA image onto the white background
-                mask = img[:,:,3] != 0  # Where the image is not transparent
-                white_background[mask] = img[mask,:3]
-                img = white_background
-            
-            # Save the image
-            cv2.imwrite(os.path.join(dir, file_name.replace('.png','.jpg')), img)
-        except:
-            print(f'>>>>> sth wrong with {file_name}')
-            traceback.print_exc()  # This will print the exception details
+# clean_image_metadata('./logos3')            # remove ICC profile in each image
+# create_metadata_csv()                       # create metadata.csv for logos3 
+# merge_csv()                                 # merge all three metadata.csv
+# copy_images('./export_logo_512')            # copy images to dataset dir
+# copy_images('./export_logo2_512')           # copy images to dataset dir
+# copy_images('./logos3')                     # copy images to dataset dir
+# clean_folder('./dataset/')                  # remove the images that are not in the metadata.csv
+# rename_files_and_update_metadata('./dataset/')
+# clean_image_metadata('./dataset')            # remove ICC profile in each image
 
-def remove_png_files(dir):
-    # Get a list of all the png files in the directory
-    png_files = glob.glob(os.path.join(dir, '*.png'))
-
-    # Iterate over the list of filepaths & remove each file.
-    for file in png_files:
-        try:
-            os.remove(file)
-            print(f"File {file} has been removed successfully")
-        except Exception as e:
-            print(f"Error occurred while deleting file : {file}. Error : {str(e)}")
-
-         
-# from wand.image import Image
-# os.environ['WAND_SUPPRESS_WARNINGS'] = 'True'
-
-# def remove_icc_profile(file_path):
-#     with Image(filename=file_path) as img:
-#         img.profiles.clear()
-#         img.save(filename=file_path)
-
-# print('copying files from folders..')
-# copy_images('./export_logo_512')
-# copy_images('./export_logo2_512')
-# copy_images('./logos3')
-# rename_files_and_update_metadata("./dataset/")
-# clean_folder('./dataset/')
-
-# clean_image_metadata('./dataset')
-# change_csv_png_to_jpg()
-# remove_png_files('./dataset')
+############## clean data ##############
 
 dataset = load_dataset("imagefolder", data_dir="./dataset", split="train")
 print(dataset)
-import matplotlib.pyplot as plt
 
-# Assuming that your dataset is a list of dictionaries with 'image' key
-images = dataset[90000:90005]['image']  # Get the first image from the dataset
-
-# If the image is a PIL Image, you can directly display it
+images = dataset[90000:90010]['image']  # Get the first image from the dataset
 for image in images:
     if isinstance(image, Image.Image):
         plt.imshow(image)
@@ -206,4 +171,4 @@ for image in images:
         plt.imshow(image)
         plt.show()
 
-dataset.push_to_hub("iamkaikai/amazing_logos_v3")
+# dataset.push_to_hub("iamkaikai/amazing_logos_v3")
