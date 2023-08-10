@@ -6,7 +6,24 @@ import time
 from PIL import Image
 import io
 from concurrent.futures import ThreadPoolExecutor
+from dotenv import load_dotenv
 
+proxy_list = []
+
+load_dotenv()
+proxy_user = os.getenv('proxy_user')
+proxy_password = os.getenv('proxy_password')
+
+with open('proxies.txt', 'r') as f:
+    proxies = f.read().split('\n')
+    for proxy in proxies:
+        proxy_list.append({
+            'http': f"http://{proxy_user}:{proxy_password}@{proxy}",
+            'https': f"https://{proxy_user}:{proxy_password}@{proxy}", 
+        })
+
+print(proxy_list)
+    
 cookies = {
     '_ga': 'GA1.2.355474566.1688918118',
     '_fbp': 'fb.1.1688918119209.1138937444',
@@ -49,8 +66,8 @@ def get_links():
 
     print('done')
     
-def save_img(url, fileName):
-    response = requests.get(url, stream=True, cookies=cookies, headers=headers)
+def save_img(url, fileName, proxy):
+    response = requests.get(url, stream=True, cookies=cookies, headers=headers, proxies=proxy)
     response.raise_for_status()
     img = Image.open(io.BytesIO(response.content))
 
@@ -68,13 +85,13 @@ def save_img(url, fileName):
 
 
 
-def process_link(link):
+def process_link(link, proxy):
     link = link.replace("\n", "")
     dd_client = ''  # Initialize dd_client as an empty string
 
     try:
         start_time = time.time()
-        response = requests.get(link, cookies=cookies, headers=headers)
+        response = requests.get(link, cookies=cookies, headers=headers, proxies=proxy)
         end_time = time.time()
         response_time = end_time - start_time
         response_time= round(response_time, 2)
@@ -117,7 +134,7 @@ def process_link(link):
         print(f'file name = {fileName}')
         print('Response time: {} seconds'.format(response_time))
         print('---------------------\n')
-        save_img(img_url, fileName)
+        save_img(img_url, fileName, proxy)
             
     except Exception as e:
         print('--------------------- ❌')
@@ -130,17 +147,17 @@ def process_link(link):
 
 def scrap():
     file = "logolounge_links.txt"
-    start_count = 274286
+    start_count = 390060
     count = 0
     
     with open(file, 'r') as f:
         links = f.readlines()
-       
-    with ThreadPoolExecutor(max_workers=8) as executor:  # Adjust max_workers as needed
+    
+    with ThreadPoolExecutor(max_workers=20) as executor:
         for link in links:
             if count >= start_count:
-                executor.submit(process_link, link)
-                time.sleep(random.randint(1, 5))
+                executor.submit(process_link, link, random.choice(proxy_list))
+                time.sleep(random.random()*1.5)
             count += 1
 
 scrap()
