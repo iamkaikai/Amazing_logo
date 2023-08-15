@@ -7,12 +7,14 @@ from PIL import Image
 import io
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
-
-proxy_list = []
+import csv
 
 load_dotenv()
+
+proxy_list = []
 proxy_user = os.getenv('proxy_user')
 proxy_password = os.getenv('proxy_password')
+Image.MAX_IMAGE_PIXELS = 300000000 
 
 with open('proxies.txt', 'r') as f:
     proxies = f.read().split('\n')
@@ -20,7 +22,8 @@ with open('proxies.txt', 'r') as f:
         proxy_list.append({
             'http': f"http://{proxy_user}:{proxy_password}@{proxy}",
             'https': f"https://{proxy_user}:{proxy_password}@{proxy}", 
-        })
+        }
+    )
 
 print(proxy_list)
     
@@ -80,10 +83,24 @@ def save_img(url, fileName, proxy):
         os.makedirs('logos3')
 
     img.thumbnail((512, 512))
-    img.save(f'./logos3/{fileName}', "PNG")
     
-
-
+    fileName = fileName.replace('/','')
+    try:
+        img.save(f'./logos3/{fileName}', "PNG")
+    except:
+        csv_file = 'long_name.csv'
+        fileName_new = fileName[:254]
+        if not os.path.exists(csv_file):
+            with open(csv_file, 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(['file_name', 'text'])
+                writer.writerow([fileName_new, fileName])
+                img.save(f'./logos3/{fileName_new}', "PNG")
+        else:
+            with open(csv_file, 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([fileName_new, fileName])
+                img.save(f'./logos3/{fileName_new}', "PNG")
 
 def process_link(link, proxy):
     link = link.replace("\n", "")
@@ -95,26 +112,26 @@ def process_link(link, proxy):
         end_time = time.time()
         response_time = end_time - start_time
         response_time= round(response_time, 2)
-        print('check point 0')
+        # print('check point 0')
         soup = BeautifulSoup(response.text, 'html.parser')
         # print(soup)
         
         #get name and tags
         try:
-            print('check point a')
+            # print('check point a')
             dd_client = soup.find('h1', class_='vcard-heading').text.replace('\n','')    
             fileName = dd_client
             
-            print('check point b')
+            # print('check point b')
             dt_industry = soup.find('dt', string='Industry')        
             dd_industry = dt_industry.find_next('dd').text
             fileName = '_'.join([dd_client, dd_industry]).replace('/', ' ')
                     
-            print('check point c')
+            # print('check point c')
             dd_tags = dt_industry.find_next('dd').find_next('dd').text.replace('\n','')
             dd_tags = ' '.join(set(dd_tags.split()))
             
-            print('check point d')
+            # print('check point d')
             fileName = '_'.join([dd_client, dd_industry, dd_tags]).replace('/', ' ').replace(' .png', '.png')
             fileName = fileName + '.png'
             words_to_replace = ['design', 'logo', 'image', 'icon', 'Icon']
@@ -123,15 +140,22 @@ def process_link(link, proxy):
         except:
             fileName = dd_client + '.png'
                     
+        if len(fileName) < 255:         #skip short names to download long names only
+            print('skip...')
+            return
+            
         #get logo img and save it
         figure = soup.find('figure', class_='single-logo-figure')
         img_url = figure.find('img')['src']
+       
                 
         #save img
         print('--------------------- ✅')
         print(f'saving img of {link}...')
         print(f'client = {dd_client}')
         print(f'file name = {fileName}')
+        print(f'name length = {len(fileName)}')
+        print(f'{img_url}')
         print('Response time: {} seconds'.format(response_time))
         print('---------------------\n')
         save_img(img_url, fileName, proxy)
@@ -147,17 +171,21 @@ def process_link(link, proxy):
 
 def scrap():
     file = "logolounge_links.txt"
-    start_count = 390060
+    start_count = 248337
     count = 0
     
     with open(file, 'r') as f:
         links = f.readlines()
     
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=40) as executor:
         for link in links:
+            
+            # if count > 0:
+            #     break
+            print(f'iteration {count}')
             if count >= start_count:
                 executor.submit(process_link, link, random.choice(proxy_list))
-                time.sleep(random.random()*1.5)
+                time.sleep(random.random()+0.2)
             count += 1
 
 scrap()
