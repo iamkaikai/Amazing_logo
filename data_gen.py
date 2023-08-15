@@ -161,9 +161,9 @@ def rename_files_and_update_metadata(dir):
 
 ############## clean data ##############
 
-# remove_duplicated_csv('./long_name.csv')    # remove dupliacted rows that have the same filename
-move_long_to_new_dir()
-# clean_image_metadata('./logos3')            # remove ICC profile in each image
+# remove_duplicated_csv('./long_name.csv')    # remove dupliacted rows that have the same filename and save as 'long_name_unique.csv'
+# move_long_to_new_dir()                      # move files that has long names to dir 'logos3-long'
+clean_image_metadata('./logos3')            # remove ICC profile in each image
 # create_metadata_csv()                       # create metadata.csv for logos3 
 # merge_csv()                                 # merge all three metadata.csv
 # copy_images('./export_logo_512')            # copy images to dataset dir
