@@ -30,8 +30,30 @@ def merge_csv():
 
     # write the merged dataframe to a new CSV file
     merged_df.to_csv('./dataset/metadata.csv', index=False)
+   
+def remove_duplicated_csv(dir):
+    df = pd.read_csv(dir, header=None)
+    df_unique = df.drop_duplicates(subset=df.columns[0], keep='first')
+    output_path = "./long_name_unique.csv"
+    df_unique.to_csv(output_path, index=False)
+   
+def move_long_to_new_dir():
+    if not os.path.exists('logos3-long'):
+        os.makedirs('logos3-long')
     
-    
+    df = pd.read_csv('long_name_unique.csv', header=None)
+    for file_name in df.iloc[:, 0]:        
+        source_path = f'./logos3/{file_name}'
+        destination_path = f'./logos3-long/{file_name}'
+        
+        try:        
+            print(f'Moving {file_name}...')
+            shutil.move(source_path, destination_path)
+        except Exception as e:
+            print('-------------------------XX')
+            print(f"An error occurred while moving '{file_name}': {e}")    
+     
+              
 def copy_images(dir):
     count = 0
     total = len(os.listdir(dir))
@@ -42,10 +64,7 @@ def copy_images(dir):
             shutil.copyfile(source, dest)
             count +=1
             print(f'{count}/{total}')
-            
 
-
-# Iterate over actual filenames
 def clean_folder(dir):
     print('start cleaning dir...')
     count = 0
@@ -70,8 +89,6 @@ def clean_folder(dir):
     print('dir cleaned...')
     print(f'remove {count_del} files')
     
-
-
 def clean_image_metadata(dir):
     count = 0
     total = len(os.listdir(dir))    
@@ -144,6 +161,8 @@ def rename_files_and_update_metadata(dir):
 
 ############## clean data ##############
 
+# remove_duplicated_csv('./long_name.csv')    # remove dupliacted rows that have the same filename
+move_long_to_new_dir()
 # clean_image_metadata('./logos3')            # remove ICC profile in each image
 # create_metadata_csv()                       # create metadata.csv for logos3 
 # merge_csv()                                 # merge all three metadata.csv
@@ -156,19 +175,19 @@ def rename_files_and_update_metadata(dir):
 
 ############## clean data ##############
 
-dataset = load_dataset("imagefolder", data_dir="./dataset", split="train")
-print(dataset)
+# dataset = load_dataset("imagefolder", data_dir="./dataset", split="train")
+# print(dataset)
 
-images = dataset[90000:90010]['image']  # Get the first image from the dataset
-for image in images:
-    if isinstance(image, Image.Image):
-        plt.imshow(image)
-        plt.show()
-    # If the image is a numpy array, you might need to transpose it for correct visualization
-    elif isinstance(image, np.ndarray):
-        if image.shape[0] == 3:  # If the image has 3 channels
-            image = np.transpose(image, (1, 2, 0))  # Transpose it to (Height, Width, Channels)
-        plt.imshow(image)
-        plt.show()
+# images = dataset[90000:90010]['image']  # Get the first image from the dataset
+# for image in images:
+#     if isinstance(image, Image.Image):
+#         plt.imshow(image)
+#         plt.show()
+#     # If the image is a numpy array, you might need to transpose it for correct visualization
+#     elif isinstance(image, np.ndarray):
+#         if image.shape[0] == 3:  # If the image has 3 channels
+#             image = np.transpose(image, (1, 2, 0))  # Transpose it to (Height, Width, Channels)
+#         plt.imshow(image)
+#         plt.show()
 
 # dataset.push_to_hub("iamkaikai/amazing_logos_v3")
