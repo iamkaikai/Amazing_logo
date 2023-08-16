@@ -203,6 +203,45 @@ def rename_files_and_update_metadata(dir):
 
     print('files renamed and metadata updated...')
         
+def is_valid_png(dir):
+    metadata_path = os.path.join(dir, 'metadata.csv')
+    df = pd.read_csv(metadata_path, lineterminator='\n')
+    print(f'rows in metadata = {df.shape[0]-1}')
+    for file_name in os.listdir(dir):
+        if file_name == 'metadata.csv':
+            continue
+        full_path = os.path.join(dir, file_name)  # Get the full path of the file
+        try:
+            with Image.open(full_path) as im:
+                im.verify()
+        except:
+            print(f"{file_name} is not a valid PNG. Removed...")
+            # print(df[df['file_name'] == file_name])
+            df = df[df['file_name'] != file_name]
+            os.remove(full_path)
+    print(f'rows in metadata = {df.shape[0]-1}')
+    print('new metadata.csv saved...')
+    df.to_csv(metadata_path, index=False, line_terminator='\n')
+            
+def push_to_HF(id):
+    dataset = load_dataset("imagefolder", data_dir="./dataset", split="train")
+    print(dataset)
+
+    images = dataset[90000:90010]['image']  # Get the first image from the dataset
+    for image in images:
+        if isinstance(image, Image.Image):
+            plt.imshow(image)
+            plt.show()
+        # If the image is a numpy array, you might need to transpose it for correct visualization
+        elif isinstance(image, np.ndarray):
+            if image.shape[0] == 3:  # If the image has 3 channels
+                image = np.transpose(image, (1, 2, 0))  # Transpose it to (Height, Width, Channels)
+            plt.imshow(image)
+            plt.show()
+
+    dataset.push_to_hub("iamkaikai/"+id)
+
+
 
 ############## clean data ##############
 
@@ -218,22 +257,6 @@ def rename_files_and_update_metadata(dir):
 # clean_folder('./dataset/')                  # remove the images that are not in the metadata.csv
 # rename_files_and_update_metadata('./dataset/')
 # clean_image_metadata('./dataset')           # remove ICC profile in each image
-
+# is_valid_png('./dataset')                   # verify if all png all not broken
+push_to_HF('amazing_logos_v4')                                    # push data to HF
 ############## clean data ##############
-
-dataset = load_dataset("imagefolder", data_dir="./dataset", split="train")
-print(dataset)
-
-images = dataset[90000:90010]['image']  # Get the first image from the dataset
-for image in images:
-    if isinstance(image, Image.Image):
-        plt.imshow(image)
-        plt.show()
-    # If the image is a numpy array, you might need to transpose it for correct visualization
-    elif isinstance(image, np.ndarray):
-        if image.shape[0] == 3:  # If the image has 3 channels
-            image = np.transpose(image, (1, 2, 0))  # Transpose it to (Height, Width, Channels)
-        plt.imshow(image)
-        plt.show()
-
-dataset.push_to_hub("iamkaikai/amazing_logos_v4")
