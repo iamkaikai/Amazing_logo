@@ -225,21 +225,22 @@ def is_valid_png(dir):
             
 def push_to_HF(id):
     dataset = load_dataset("imagefolder", data_dir="./dataset", split="train")
-    print(dataset)
-
-    images = dataset[90000:90010]['image']  # Get the first image from the dataset
-    for image in images:
-        if isinstance(image, Image.Image):
-            plt.imshow(image)
-            plt.show()
-        # If the image is a numpy array, you might need to transpose it for correct visualization
-        elif isinstance(image, np.ndarray):
-            if image.shape[0] == 3:  # If the image has 3 channels
-                image = np.transpose(image, (1, 2, 0))  # Transpose it to (Height, Width, Channels)
-            plt.imshow(image)
-            plt.show()
-
     dataset.push_to_hub("iamkaikai/"+id)
+    print(dataset)
+    # preview from the dataset
+    # images = dataset[90000:90010]['image']  # Get the first image from the dataset
+    # for image in images:
+    #     if isinstance(image, Image.Image):
+    #         plt.imshow(image)
+    #         plt.show()
+    #     # If the image is a numpy array, you might need to transpose it for correct visualization
+    #     elif isinstance(image, np.ndarray):
+    #         if image.shape[0] == 3:  # If the image has 3 channels
+    #             image = np.transpose(image, (1, 2, 0))  # Transpose it to (Height, Width, Channels)
+    #         plt.imshow(image)
+    #         plt.show()
+
+   
 
 
 
