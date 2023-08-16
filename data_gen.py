@@ -24,9 +24,10 @@ def merge_csv():
     df1 = pd.read_csv('./export_logo_512/metadata.csv')
     df2 = pd.read_csv('./export_logo2_512/metadata.csv')
     df3 = pd.read_csv('./logos3/metadata.csv')
+    df4 = pd.read_csv('./logos3-long/metadata.csv')
 
     # concatenate the two dataframes along the rows
-    merged_df = pd.concat([df1, df2, df3])
+    merged_df = pd.concat([df1, df2, df3, df4])
 
     # write the merged dataframe to a new CSV file
     merged_df.to_csv('./dataset/metadata.csv', index=False)
@@ -42,6 +43,7 @@ def move_long_to_new_dir():
         os.makedirs('logos3-long')
     
     df = pd.read_csv('long_name_unique.csv', header=None)
+    err_count = 0
     for file_name in df.iloc[:, 0]:        
         source_path = f'./logos3/{file_name}'
         destination_path = f'./logos3-long/{file_name}'
@@ -50,10 +52,53 @@ def move_long_to_new_dir():
             print(f'Moving {file_name}...')
             shutil.move(source_path, destination_path)
         except Exception as e:
-            print('-------------------------XX')
-            print(f"An error occurred while moving '{file_name}': {e}")    
-     
-              
+            err_count +=1
+            print('-------------------------')
+            print(f"An error occurred while moving '{file_name}': {e}")        
+            print('-------------------------')
+            continue
+        
+    print(f'err_count = {err_count}')
+   
+def check_num_of_not_png(dir):
+    format_counts = {}
+    count = 0
+    err_count = 0
+    for item in os.listdir(dir):
+        if count < 10: 
+            if not item.endswith('.png') or not item.endswith(''):
+                # print(item)
+                parts = item.split()
+                last_word = parts[-1] + parts[-2]
+                length = len(item) - len(last_word) - 2
+                new_name = item[:length] + '.png'
+                # print(new_name)
+                # print('--------------')
+                
+                source_path = f'./logos3/{item}'
+                destination_path = f'./logos3-long/{new_name}'
+                
+                try:        
+                    # print(f'Moving {item}...')
+                    shutil.move(source_path, destination_path)
+                except Exception as e:
+                    print('>>>>>>>>>>>>>>')
+                    print(e)
+                    print(len(item))
+                    print(len(new_name))
+                    print('<<<<<<<<<<<<<<')
+                    err_count +=1
+                    
+        item_path = os.path.join(dir, item)
+        
+        if os.path.isfile(item_path):
+            _, extension = os.path.splitext(item)
+            format_counts[extension] = format_counts.get(extension, 0) + 1
+    sorted_format_counts = dict(sorted(format_counts.items(), key=lambda item: item[1], reverse=True))
+    print(sorted_format_counts)
+    print(f'err_count = {err_count}')
+
+ 
 def copy_images(dir):
     count = 0
     total = len(os.listdir(dir))
@@ -63,7 +108,7 @@ def copy_images(dir):
             dest = os.path.join(directory, file_name)
             shutil.copyfile(source, dest)
             count +=1
-            print(f'{count}/{total}')
+            print(f'copying files from {dir} - {count}/{total}')
 
 def clean_folder(dir):
     print('start cleaning dir...')
@@ -88,7 +133,7 @@ def clean_folder(dir):
 
     print('dir cleaned...')
     print(f'remove {count_del} files')
-    
+ 
 def clean_image_metadata(dir):
     count = 0
     total = len(os.listdir(dir))    
@@ -122,7 +167,7 @@ def clean_image_metadata(dir):
             traceback.print_exc()  # This will print the exception details
 
         count +=1
-        print(f'{count}/{total}')
+        print(f'cleaning ICC profile from {dir} - {count}/{total}')
 
 def rename_files_and_update_metadata(dir):
     print('start renaming files and updating metadata...')
@@ -163,31 +208,32 @@ def rename_files_and_update_metadata(dir):
 
 # remove_duplicated_csv('./long_name.csv')    # remove dupliacted rows that have the same filename and save as 'long_name_unique.csv'
 # move_long_to_new_dir()                      # move files that has long names to dir 'logos3-long'
-clean_image_metadata('./logos3')            # remove ICC profile in each image
+# check_num_of_not_png('./logos3')            #check if there's any anomaly files left (not .png)
 # create_metadata_csv()                       # create metadata.csv for logos3 
 # merge_csv()                                 # merge all three metadata.csv
 # copy_images('./export_logo_512')            # copy images to dataset dir
 # copy_images('./export_logo2_512')           # copy images to dataset dir
 # copy_images('./logos3')                     # copy images to dataset dir
+# copy_images('./logos3-long')                # copy images to dataset dir
 # clean_folder('./dataset/')                  # remove the images that are not in the metadata.csv
 # rename_files_and_update_metadata('./dataset/')
-# clean_image_metadata('./dataset')            # remove ICC profile in each image
+# clean_image_metadata('./dataset')           # remove ICC profile in each image
 
 ############## clean data ##############
 
-# dataset = load_dataset("imagefolder", data_dir="./dataset", split="train")
-# print(dataset)
+dataset = load_dataset("imagefolder", data_dir="./dataset", split="train")
+print(dataset)
 
-# images = dataset[90000:90010]['image']  # Get the first image from the dataset
-# for image in images:
-#     if isinstance(image, Image.Image):
-#         plt.imshow(image)
-#         plt.show()
-#     # If the image is a numpy array, you might need to transpose it for correct visualization
-#     elif isinstance(image, np.ndarray):
-#         if image.shape[0] == 3:  # If the image has 3 channels
-#             image = np.transpose(image, (1, 2, 0))  # Transpose it to (Height, Width, Channels)
-#         plt.imshow(image)
-#         plt.show()
+images = dataset[90000:90010]['image']  # Get the first image from the dataset
+for image in images:
+    if isinstance(image, Image.Image):
+        plt.imshow(image)
+        plt.show()
+    # If the image is a numpy array, you might need to transpose it for correct visualization
+    elif isinstance(image, np.ndarray):
+        if image.shape[0] == 3:  # If the image has 3 channels
+            image = np.transpose(image, (1, 2, 0))  # Transpose it to (Height, Width, Channels)
+        plt.imshow(image)
+        plt.show()
 
-# dataset.push_to_hub("iamkaikai/amazing_logos_v3")
+dataset.push_to_hub("iamkaikai/amazing_logos_v4")
