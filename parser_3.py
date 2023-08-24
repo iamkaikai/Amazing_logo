@@ -16,20 +16,17 @@ proxy_user = os.getenv('proxy_user')
 proxy_password = os.getenv('proxy_password')
 proxy_key = os.getenv('proxy_key')
 Image.MAX_IMAGE_PIXELS = 300000000 
-print(proxy_user)
-print(proxy_password)
-print(proxy_key)
 
 with open('proxies.txt', 'r') as f:
     proxies = f.read().split('\n')
     for proxy in proxies:
         proxy_list.append({
-            'http': f"http://{proxy_user}:{proxy_password}@{proxy}",
+            # 'http': f"http://{proxy_user}:{proxy_password}@{proxy}",
             'https': f"http://{proxy_user}:{proxy_password}@{proxy}",
         }
     )
 
-# print(proxy_list)
+print(proxy_list)
     
 cookies = {
     '_ga': 'GA1.2.1749448558.1690347979',
@@ -56,6 +53,7 @@ headers = {
     'sec-fetch-user': '?1',
     'upgrade-insecure-requests': '1',
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+
 }
 
 
@@ -169,6 +167,7 @@ def process_link(link, proxy, count):
                 print(f'industry = {industry}')
                 print(f'tags = {tags}')
                 print(f'img url = {img_url}')
+                print(f'proxy = {proxy}')
                 print('Response time: {} seconds'.format(response_time))
                 print('---------------------\n')
                 save_img(img_url, fileName, proxy)
@@ -184,12 +183,12 @@ def process_link(link, proxy, count):
 
 def scrap_imgs():
     file = "logolounge_links.txt"
-    start_count = 189
+    start_count = 59812
     count = 0
     with open(file, 'r') as f:
         links = f.readlines()
     
-    with ThreadPoolExecutor(max_workers=40) as executor:
+    with ThreadPoolExecutor(max_workers=30) as executor:
         for link in links:
             # test mode
             # if count > 2:
@@ -197,7 +196,7 @@ def scrap_imgs():
             # print(f'iteration {count}')
             if count >= start_count:
                 executor.submit(process_link, link, random.choice(proxy_list), count)
-                time.sleep(random.random()+0.2)
+                time.sleep(random.random()+0.3)
             count += 1
 
 def scrap_links():
